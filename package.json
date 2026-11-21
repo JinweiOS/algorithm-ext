@@ -4,13 +4,13 @@
   "private": true,
   "version": "1.4.0",
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/JinweiOS/algorithm--ext",
+  "homepage": "https://github.com/JinweiOS/algorithm-ext",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JinweiOS/algorithm--ext.git"
+    "url": "git+https://github.com/JinweiOS/algorithm-ext.git"
   },
   "bugs": {
-    "url": "https://github.com/JinweiOS/algorithm--ext/issues"
+    "url": "https://github.com/JinweiOS/algorithm-ext/issues"
   },
   "type": "module",
   "scripts": {
