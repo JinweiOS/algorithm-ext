@@ -1,0 +1,64 @@
+# NOTICE
+
+速写 (Algo Ext) — LeetCode 智能补全浏览器扩展
+Copyright (C) 2026 彭金为 (JinweiOS)
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. The full text is in `LICENSE`. There is NO WARRANTY, to the extent
+permitted by law.
+
+Distributing a modified version of this program — or a work that incorporates
+it — requires releasing that work under the GPL-3.0 as well, and making its
+complete corresponding source available.
+
+## Upstream: LeetSense
+
+This project began as a fork of LeetSense, Copyright (c) 2026 Harshit Sharma,
+released under the MIT License (<https://github.com/C-W-D-Harshit/leetsense>).
+The MIT notice is preserved verbatim in `legal/leetsense-MIT.txt`, as that
+license requires of every copy and substantial portion of the software. The
+portions inherited from LeetSense remain available from their author under the
+MIT License; this project's own changes are licensed under the GPL-3.0.
+
+Everything since the fork — the 速写 branding and injected panel, the
+JavaScript and TypeScript language service (`lib/engines/typescript`), the
+completion-visibility workaround, the MiSans card typography, the panel's
+animated background and ink field, and the release tooling — is original work
+of this project.
+
+## Bundled third-party components
+
+`THIRD_PARTY_NOTICES.md` lists every bundled engine, library, typeface and
+header pack with its upstream and license. In short: clangd and the Clang
+resource headers are Apache-2.0 with LLVM Exceptions, TypeFox's clangd WASM
+build and browser-basedpyright are MIT, the VS Code language-server libraries
+are MIT, and the MiSans subset is used under Xiaomi's MiSans terms. None of
+these restrict this project's GPL-3.0 licensing of its own code.
+
+## Known licensing risk: ReactBits SplashCursor
+
+`entrypoints/panel/fluid-cursor.ts` is a TypeScript port of the SplashCursor
+component from ReactBits (<https://www.reactbits.dev/animations/splash-cursor>),
+Copyright (c) 2026 David Haz, distributed under the "MIT + Commons Clause
+License Condition v1.0" (`legal/reactbits-LICENSE.md`).
+
+That license permits using the component inside an application, website or
+product, but its Commons Clause forbids selling, sublicensing or redistributing
+the components themselves — "whether alone, in a bundle, or as a ported
+version". This file is such a port, and it is published in this repository, so
+the port is redistributed in source form. The GPL-3.0 grant above does not
+extend to it: no additional rights in that file are granted here, and a
+downstream user cannot treat it as GPL-3.0 code.
+
+Tracked as a known risk rather than a settled question. The intent is to
+replace the module with an independent implementation of the same public
+algorithm — Pavel Dobryakov's MIT-licensed WebGL fluid simulation, from which
+SplashCursor itself derives — and to drop this section when that lands. Until
+then, treat the file as off-limits for reuse outside this project.
+
+## Trademarks
+
+LeetCode is a trademark of LeetCode, LLC. This project is an independent work
+and is not affiliated with, endorsed by, or sponsored by LeetCode.

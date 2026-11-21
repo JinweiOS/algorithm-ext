@@ -1,0 +1,398 @@
+/* Bundled, not fetched: the panel is the only surface the extension owns, so
+   the face ships inside the package. This is a MiSans VF subset covering Latin,
+   the CJK used by the UI and our own copy, keeping the asset at ~167 KB.
+   `woff2-variations` + the weight range lets one file serve 400–700. */
+@font-face {
+  font-family: "MiSans";
+  src: url("/fonts/MiSans-VF.woff2") format("woff2-variations");
+  font-weight: 150 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper-1: #fffdf8;
+  --paper-2: #fbf3e1;
+  --paper-3: #f5e9d2;
+  --ink: #2a2016;
+  --ink-soft: #7c6a52;
+  --ink-faint: #9c8b70;
+  --gold: #b8862b;
+  --gold-bright: #d9a94d;
+  --gold-pale: #f0dfb8;
+  --line: #ebdcbe;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  width: 318px;
+  /* The card is a fixed-size surface: during the entry animation the host
+     wrapper's height trails the layout by a frame or two, and a transient
+     overflow would otherwise flash the iframe's scrollbars. */
+  overflow: hidden;
+  /* `fixed` pins the gradient to the viewport, so it fills the canvas no matter
+     how tall the host viewport is (a plain element background stops at the
+     content edge and leaves a flat band underneath). */
+  background: linear-gradient(
+    168deg,
+    var(--paper-1) 0%,
+    var(--paper-2) 58%,
+    var(--paper-3) 100%
+  ) fixed;
+}
+
+body {
+  width: 318px;
+  font-family:
+    "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 20px 16px;
+}
+
+/* The injected card wears a drag grip on the right end of its credit row (see
+   `lib/panel/action-panel` — the grip lives in the host-page wrapper, not this
+   document). The credit line is left-aligned, so that end is already empty; the
+   reserved padding only guarantees longer copy can never slide under the grip.
+   Only the framed copy reserves it, so the native popup stays symmetric. */
+body:target .credit {
+  padding-right: 34px;
+}
+
+/* ── living background ────────────────────────────────────────────────────
+   The paper gradient stays exactly as it was on `html`; these two layers only
+   add movement on top of it, so the card still reads as the same warm sheet.
+   `.aurora` drifts and breathes, its `::after` is a slow specular band, and
+   `.fluid` is the WebGL ink canvas painted by fluid-cursor.ts. Content sits
+   above all three at z-index 3. */
+
+.aurora {
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      46% 42% at 22% 18%,
+      rgba(233, 193, 120, 0.42) 0%,
+      rgba(233, 193, 120, 0) 66%
+    ),
+    radial-gradient(
+      40% 38% at 82% 26%,
+      rgba(214, 164, 74, 0.3) 0%,
+      rgba(214, 164, 74, 0) 68%
+    ),
+    radial-gradient(
+      52% 46% at 58% 92%,
+      rgba(244, 221, 178, 0.5) 0%,
+      rgba(244, 221, 178, 0) 70%
+    );
+  filter: blur(10px);
+  animation: aurora-breathe 22s ease-in-out infinite;
+  will-change: transform;
+}
+
+.aurora::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    104deg,
+    rgba(255, 255, 255, 0) 24%,
+    rgba(255, 246, 224, 0.65) 46%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  background-size: 220% 100%;
+  animation: aurora-sheen 17s linear infinite;
+}
+
+.fluid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@keyframes aurora-breathe {
+  0% {
+    transform: translate3d(-2%, 1%, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(3%, -2%, 0) scale(1.12);
+  }
+  100% {
+    transform: translate3d(-2%, 1%, 0) scale(1.04);
+  }
+}
+
+@keyframes aurora-sheen {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 220% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .aurora::after {
+    animation: none;
+  }
+}
+
+/* ── entry sequence (injected panel only) ────────────────────────────────
+   The injector frames this page as `panel.html#framed`, so the whole
+   choreography is scoped with :target. The native-popup fallback opens the
+   page without the fragment, renders at full height on its first frame and
+   never gets a window that has to grow afterwards.
+
+   Order: header sweeps in right→left, the logo then grows bottom→top, and
+   finally the body unfolds downward out of the header. Only layout height
+   (grid rows) and clip paths are animated, so the panel reports its growing
+   height to the host wrapper frame by frame.
+
+   The three steps overlap instead of queueing (logo starts before the sweep
+   finishes, the body starts while the logo is still rising) and the whole
+   run lands in ~640ms: a continuous ribbon of motion rather than three
+   distinct beats. Every step eases out hard at the start, so it feels faster
+   than the same duration on a linear curve. */
+
+@keyframes brand-sweep {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes logo-rise {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes body-unfold {
+  from {
+    grid-template-rows: 0fr;
+  }
+  to {
+    grid-template-rows: 1fr;
+  }
+}
+
+.reveal {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.reveal__inner {
+  overflow: hidden;
+}
+
+body:target .brand {
+  animation: brand-sweep 280ms cubic-bezier(0.16, 0.84, 0.28, 1) both;
+}
+
+/* Starts 130ms before the sweep ends: the icon is already climbing while the
+   last of the wordmark is still sliding in. */
+body:target .brand__icon {
+  animation: logo-rise 240ms cubic-bezier(0.16, 0.84, 0.28, 1) 150ms both;
+}
+
+/* Picks up 90ms before the logo lands, so the card opens out of a still-moving
+   header. Fast-out curve keeps the growth decisive without the host wrapper
+   having to chase a long slow tail. */
+body:target .reveal {
+  animation: body-unfold 340ms cubic-bezier(0.25, 0.86, 0.34, 1) 300ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:target .brand,
+  body:target .brand__icon,
+  body:target .reveal {
+    animation: none;
+  }
+}
+
+/* warm halo behind the wordmark */
+.glow {
+  position: absolute;
+  z-index: 1;
+  top: -72px;
+  left: -30px;
+  width: 230px;
+  height: 170px;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(224, 178, 95, 0.32) 0%,
+    rgba(224, 178, 95, 0.12) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.brand {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand__icon {
+  display: block;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.brand__name {
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  background: linear-gradient(100deg, #7d5312 0%, #b8862b 45%, #d9a94d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand__sub {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.tagline {
+  position: relative;
+  margin-top: 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.langs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.langs__label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.langs__list {
+  display: flex;
+  gap: 5px;
+  list-style: none;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #55401f;
+  background: #fffcf4;
+  border: 1px solid var(--gold-pale);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
+.chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--gold-bright), var(--gold));
+}
+
+.features {
+  position: relative;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.features li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.features li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  background: linear-gradient(140deg, var(--gold-bright), var(--gold));
+}
+
+.hint {
+  position: relative;
+  margin-top: 13px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+.credit {
+  position: relative;
+  margin-top: 14px;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+.credit__org {
+  font-weight: 700;
+  color: #5d4318;
+}

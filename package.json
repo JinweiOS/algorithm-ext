@@ -1,0 +1,51 @@
+{
+  "name": "algo-ext",
+  "description": "速写：为 LeetCode 编辑器提供 Python、C++、JavaScript 与 TypeScript 的智能补全、悬停提示与实时诊断。",
+  "private": true,
+  "version": "1.4.0",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/JinweiOS/algorithm--ext",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JinweiOS/algorithm--ext.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JinweiOS/algorithm--ext/issues"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "tslib:build": "node scripts/build-typescript-lib.mjs",
+    "predev": "npm run tslib:build",
+    "predev:firefox": "npm run tslib:build",
+    "prebuild": "npm run tslib:build",
+    "prebuild:firefox": "npm run tslib:build",
+    "licenses:collect": "node scripts/collect-runtime-licenses.mjs",
+    "version:check": "node scripts/check-release-version.mjs",
+    "release:check-tag": "node scripts/check-release-tag.mjs",
+    "release:notes": "node scripts/release-notes.mjs",
+    "build": "npm run licenses:collect && wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "npm run build && npm run audit:release && node scripts/package-release.mjs",
+    "zip:firefox": "wxt zip -b firefox",
+    "test": "vitest run",
+    "test:clangd": "deno run --allow-read scripts/clangd-acceptance/run.mjs",
+    "assets:clangd-headers": "node scripts/build-clang-resource-pack.mjs",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare",
+    "audit:release": "node scripts/release-audit.mjs",
+    "check": "npm run version:check && npm test && npm run test:clangd && npm run compile && npm run build && npm run audit:release"
+  },
+  "dependencies": {
+    "browser-basedpyright": "1.39.9",
+    "typescript": "^5.9.3",
+    "vscode-jsonrpc": "^9.0.1",
+    "vscode-languageserver-protocol": "^3.18.2"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10",
+    "wxt": "^0.20.27",
+    "yaml": "2.9.0"
+  }
+}
